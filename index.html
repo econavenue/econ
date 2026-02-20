@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Econotopia Simulation</title>
+    <title>Econotopia Simulation v2</title>
     <style>
         body {
             font-family: Arial;
@@ -10,7 +10,6 @@
             text-align: center;
             padding: 20px;
         }
-
         h1 { font-size: 40px; margin-bottom: 10px; }
         p { font-size: 18px; }
         .slider-container { margin: 15px 0; }
@@ -25,9 +24,9 @@
             background-color: cyan;
             color: black;
         }
-
         button:hover { background-color: white; color: black; }
         .stats { margin-top: 30px; font-size: 18px; }
+        .event { margin-top: 20px; font-size: 16px; font-style: italic; }
     </style>
 </head>
 <body>
@@ -50,7 +49,7 @@
     <input type="range" id="interest" min="0" max="10" value="5" oninput="updateSliders()">
 </div>
 
-<button onclick="simulateYear()">Advance 1 Year</button>
+<button onclick="simulateTurn()">Advance 4 Months</button>
 
 <div class="stats">
     <p>GDP Growth: <span id="growth">3</span>%</p>
@@ -58,11 +57,13 @@
     <p>Unemployment: <span id="unemployment">6</span>%</p>
     <p>Budget Deficit: <span id="deficit">20</span>%</p>
     <p>Approval Rating: <span id="approval">50</span>%</p>
-    <p>Year: <span id="year">1</span> / 5</p>
+    <p>Turn: <span id="turn">1</span> / 15</p>
 </div>
 
+<div class="event" id="event"></div>
+
 <script>
-let year = 1;
+let turn = 1;
 
 function updateSliders() {
     document.getElementById('taxVal').innerText = document.getElementById('tax').value;
@@ -70,26 +71,43 @@ function updateSliders() {
     document.getElementById('interestVal').innerText = document.getElementById('interest').value;
 }
 
-function simulateYear() {
-    // Get current values
+function randomEvent() {
+    const events = [
+        {text: "Global oil prices spike!", growth: -0.5, inflation: 1, unemployment: 0, deficit: 0, approval: -2},
+        {text: "Tech boom in Econotopia!", growth: 1, inflation: -0.2, unemployment: -0.5, deficit: 0, approval: 2},
+        {text: "Natural disaster hits!", growth: -1, inflation: 0.5, unemployment: 1, deficit: 5, approval: -3},
+        {text: "Trade deal signed!", growth: 0.5, inflation: -0.3, unemployment: -0.2, deficit: -1, approval: 1},
+        {text: "Stock market crash!", growth: -0.7, inflation: 0.2, unemployment: 1, deficit: 2, approval: -2},
+        {text: "Healthcare breakthrough!", growth: 0.3, inflation: -0.1, unemployment: -0.3, deficit: 0, approval: 1},
+        {text: "Political scandal!", growth: 0, inflation: 0, unemployment: 0, deficit: 0, approval: -5},
+        {text: "Small tax reform succeeds!", growth: 0.2, inflation: -0.1, unemployment: -0.1, deficit: -1, approval: 2}
+    ];
+    return events[Math.floor(Math.random() * events.length)];
+}
+
+function simulateTurn() {
     let tax = Number(document.getElementById('tax').value);
     let spending = Number(document.getElementById('spending').value);
     let interest = Number(document.getElementById('interest').value);
 
-    // Simple economic formulas
-    let growth = 3 + (spending*0.2) - (tax*0.1) - (interest*0.3);
-    growth = Math.max(-5, Math.min(growth, 10)); // limit growth
+    // Random event
+    let event = randomEvent();
+    document.getElementById('event').innerText = "Event: " + event.text;
 
-    let inflation = 2 + (growth*0.4) - (interest*0.5);
+    // Economic formulas for 4-month period
+    let growth = 3 + (spending*0.1) - (tax*0.05) - (interest*0.15) + event.growth;
+    growth = Math.max(-5, Math.min(growth, 10));
+
+    let inflation = 2 + (growth*0.2) - (interest*0.25) + event.inflation;
     inflation = Math.max(0, Math.min(inflation, 10));
 
-    let unemployment = 6 - (growth*0.5);
+    let unemployment = 6 - (growth*0.25) + event.unemployment;
     unemployment = Math.max(0, Math.min(unemployment, 15));
 
-    let deficit = spending - tax;
+    let deficit = spending - tax + event.deficit;
     deficit = Math.max(0, Math.min(deficit, 100));
 
-    let approval = 50 + (growth*2) - (inflation*1.5) - (unemployment*1.5) - (deficit*0.3);
+    let approval = 50 + (growth*1) - (inflation*0.75) - (unemployment*0.75) - (deficit*0.15) + event.approval;
     approval = Math.max(0, Math.min(approval, 100));
 
     // Update UI
@@ -99,13 +117,15 @@ function simulateYear() {
     document.getElementById('deficit').innerText = deficit.toFixed(1);
     document.getElementById('approval').innerText = approval.toFixed(1);
 
-    year++;
-    document.getElementById('year').innerText = year;
+    turn++;
+    document.getElementById('turn').innerText = turn;
 
-    if(year > 5){
+    if(turn > 15){
         alert("Election Time!\nApproval Rating: " + approval.toFixed(1) + "%\n" + (approval>=50 ? "You won!" : "You lost!"));
-        year = 1; // reset game
+        // Reset game
+        turn = 1;
         document.getElementById('approval').innerText = 50;
+        document.getElementById('event').innerText = "";
     }
 }
 </script>
