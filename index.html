@@ -164,8 +164,8 @@ function simulateTurn() {
     turn++;
     document.getElementById('turn').innerText = turn;
 
-    if(turn > 15){
-        alert("Election Time!\nApproval Rating: " + approval.toFixed(1) + "%\n" + (approval>=50 ? "You won!" : "You lost!"));
+if(turn > 15){  // line 97
+    alert("Election Time!\nApproval Rating: " + approval.toFixed(1) + "%\n" + (approval>=50 ? "You won!" : "You lost!"));
         // Reset game
         turn = 1;
         labels.length = 0;
@@ -183,3 +183,4 @@ function simulateTurn() {
 
 </body>
 </html>
+
