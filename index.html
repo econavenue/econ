@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Econotopia Simulation v2</title>
+    <title>Econotopia Simulation v3</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: Arial;
@@ -25,8 +26,9 @@
             color: black;
         }
         button:hover { background-color: white; color: black; }
-        .stats { margin-top: 30px; font-size: 18px; }
-        .event { margin-top: 20px; font-size: 16px; font-style: italic; }
+        .stats { margin-top: 20px; font-size: 18px; }
+        .event { margin-top: 15px; font-size: 16px; font-style: italic; }
+        canvas { background: #fff; margin-top: 20px; border-radius: 8px; }
     </style>
 </head>
 <body>
@@ -62,8 +64,19 @@
 
 <div class="event" id="event"></div>
 
+<!-- Charts -->
+<canvas id="economicChart" width="600" height="300"></canvas>
+
 <script>
 let turn = 1;
+
+// History arrays for graphing
+let growthHistory = [];
+let inflationHistory = [];
+let unemploymentHistory = [];
+let deficitHistory = [];
+let approvalHistory = [];
+let labels = [];
 
 function updateSliders() {
     document.getElementById('taxVal').innerText = document.getElementById('tax').value;
@@ -85,16 +98,38 @@ function randomEvent() {
     return events[Math.floor(Math.random() * events.length)];
 }
 
+// Create chart
+const ctx = document.getElementById('economicChart').getContext('2d');
+const economicChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: labels,
+        datasets: [
+            { label: 'GDP Growth', data: growthHistory, borderColor: 'cyan', fill: false },
+            { label: 'Inflation', data: inflationHistory, borderColor: 'orange', fill: false },
+            { label: 'Unemployment', data: unemploymentHistory, borderColor: 'red', fill: false },
+            { label: 'Budget Deficit', data: deficitHistory, borderColor: 'yellow', fill: false },
+            { label: 'Approval', data: approvalHistory, borderColor: 'lime', fill: false }
+        ]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { labels: { color: 'white' } } },
+        scales: {
+            x: { ticks: { color: 'white' } },
+            y: { ticks: { color: 'white' }, min: 0 }
+        }
+    }
+});
+
 function simulateTurn() {
     let tax = Number(document.getElementById('tax').value);
     let spending = Number(document.getElementById('spending').value);
     let interest = Number(document.getElementById('interest').value);
 
-    // Random event
     let event = randomEvent();
     document.getElementById('event').innerText = "Event: " + event.text;
 
-    // Economic formulas for 4-month period
     let growth = 3 + (spending*0.1) - (tax*0.05) - (interest*0.15) + event.growth;
     growth = Math.max(-5, Math.min(growth, 10));
 
@@ -117,6 +152,15 @@ function simulateTurn() {
     document.getElementById('deficit').innerText = deficit.toFixed(1);
     document.getElementById('approval').innerText = approval.toFixed(1);
 
+    // Add to history for charts
+    labels.push("Turn " + turn);
+    growthHistory.push(growth.toFixed(1));
+    inflationHistory.push(inflation.toFixed(1));
+    unemploymentHistory.push(unemployment.toFixed(1));
+    deficitHistory.push(deficit.toFixed(1));
+    approvalHistory.push(approval.toFixed(1));
+    economicChart.update();
+
     turn++;
     document.getElementById('turn').innerText = turn;
 
@@ -124,6 +168,13 @@ function simulateTurn() {
         alert("Election Time!\nApproval Rating: " + approval.toFixed(1) + "%\n" + (approval>=50 ? "You won!" : "You lost!"));
         // Reset game
         turn = 1;
+        labels.length = 0;
+        growthHistory.length = 0;
+        inflationHistory.length = 0;
+        unemploymentHistory.length = 0;
+        deficitHistory.length = 0;
+        approvalHistory.length = 0;
+        economicChart.update();
         document.getElementById('approval').innerText = 50;
         document.getElementById('event').innerText = "";
     }
